@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>室友每週清潔簽到表</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#222;--mute:#6b6b66;--line:#e2e0d8;--acc:#2f7d5b;--accbg:#e4f3ec;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181a;--card:#222426;--ink:#ececea;--mute:#9a9a95;--line:#34363a;--acc:#5fc093;--accbg:#1e3329;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17181a;--card:#222426;--ink:#ececea;--mute:#9a9a95;--line:#34363a;--acc:#5fc093;--accbg:#1e3329;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:8px 0 4px}
+h2{font-size:17px;margin:0 0 8px}
+.sub{color:var(--mute);font-size:14px;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row label{flex:1 1 140px;font-size:13px;color:var(--mute);display:flex;flex-direction:column;gap:4px}
+select,input[type=date]{font:inherit;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.item{display:flex;gap:12px;align-items:flex-start;padding:10px 4px;border-top:1px solid var(--line);cursor:pointer}
+.item:first-of-type{border-top:0}
+.item input{width:24px;height:24px;margin:1px 0 0;accent-color:var(--acc);flex:none}
+.item span small{display:block;color:var(--mute);font-size:13px}
+.item.done span{color:var(--mute);text-decoration:line-through}
+.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin:6px 0 4px}
+.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .25s}
+canvas{width:100%;height:140px;border:1.5px dashed var(--line);border-radius:12px;background:var(--bg);touch-action:none;display:block}
+button{font:inherit;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.p{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+.btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.note{font-size:13px;color:var(--mute);margin-top:8px}
+.ok{color:var(--acc);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<h1>🏠 室友每週清潔簽到表</h1>
+<p class="sub">輪值順序：瀋陽 ➔ Derrick ➔ Iris（每週順延）<br>每週六或週日打掃，建議週日 20:00 前完成。</p>
+
+<div class="card">
+  <div class="row">
+    <label>打掃日期<input type="date" id="date"></label>
+    <label>本週值日生<select id="who"><option>瀋陽</option><option>Derrick</option><option>Iris</option></select></label>
+  </div>
+  <div class="note" id="next"></div>
+</div>
+
+<div class="card">
+  <h2 id="prog">完成進度 0 / 0</h2>
+  <div class="bar"><i id="barfill"></i></div>
+</div>
+
+<div id="list"></div>
+
+<div class="card">
+  <h2>✍️ 值日生簽名（Initial）</h2>
+  <canvas id="sig"></canvas>
+  <div class="btns"><button id="clr">清除簽名</button></div>
+  <div class="note">用手指或滑鼠在框內簽名，會自動儲存。</div>
+</div>
+
+<div class="card">
+  <div class="btns">
+    <button class="p" id="copy">📋 複製完成回報（貼到群組）</button>
+    <button id="reset">重設本次</button>
+  </div>
+  <div class="note" id="msg">勾選與簽名只存在你自己的瀏覽器；完成後請按「複製完成回報」貼到群組，其他人就看得到。</div>
+</div>
+
+<div class="card">
+  <h2>🛒 缺少的工具與耗材</h2>
+  <div class="note" style="margin-top:0">發現工具或耗材不夠時（例如 Swiffer 濕布、垃圾袋、餐巾紙、消毒殺菌劑），買完後請在群組分享收據或金額，大家一起分擔費用。</div>
+</div>
+</main>
+
+<script>
+var SECTIONS=[
+{t:"🍳 一、廚房區域",items:[
+["瓦斯爐檯面","擦拭爐頭周圍油漬與食物殘渣"],
+["水槽","清空濾網殘渣，刷洗水槽內壁與水龍頭水漬"],
+["備餐檯面","用濕布擦掉油污、食物沾痕與水漬"],
+["微波爐內部","擦拭濺出的油漬與水氣"],
+["微波爐防濺蓋","放進洗碗機清洗"],
+["廚餘桶保養","原本的桶子倒空後拿至水槽浸泡，用消毒殺菌劑刷洗晾乾；改用另一個廚餘桶套上新垃圾袋，套袋前桶底先墊 1～2 張餐巾紙"]]},
+{t:"🪜 二、二樓公共區域",items:[
+["地面清潔","走道與公共空間：掃地／吸地 ➔ 拖地"],
+["公共垃圾與回收","清理二樓公共垃圾桶並更換新袋"],
+["高頻接觸點","擦拭二樓電燈開關與房間門把"]]},
+{t:"✅ 三、收尾",items:[
+["工具歸位","抹布洗淨晾乾，Swiffer 更換新的濕布，吸塵器集塵盒倒空歸位"]]}
+];
+var ORDER=["瀋陽","Derrick","Iris"];
+var $=function(id){return document.getElementById(id)};
+var dateEl=$("date"),whoEl=$("who"),state={checks:{},sig:"",who:ORDER[0]};
+function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function key(){return "chores:"+dateEl.value}
+function load(){try{var s=localStorage.getItem(key());state=s?JSON.parse(s):{checks:{},sig:"",who:whoEl.value}}catch(e){state={checks:{},sig:"",who:whoEl.value}}
+ if(!state.checks)state.checks={};whoEl.value=state.who||ORDER[0]}
+function save(){try{state.who=whoEl.value;localStorage.setItem(key(),JSON.stringify(state))}catch(e){}}
+var total=0;SECTIONS.forEach(function(s){total+=s.items.length});
+function render(){
+ var box=$("list");box.innerHTML="";var n=0;
+ SECTIONS.forEach(function(s,si){
+  var c=document.createElement("div");c.className="card";
+  var h=document.createElement("h2");h.textContent=s.t;c.appendChild(h);
+  s.items.forEach(function(it,ii){
+   var k=si+"-"+ii,l=document.createElement("label");l.className="item"+(state.checks[k]?" done":"");
+   var cb=document.createElement("input");cb.type="checkbox";cb.checked=!!state.checks[k];if(cb.checked)n++;
+   cb.onchange=function(){state.checks[k]=cb.checked;save();render()};
+   var sp=document.createElement("span");sp.textContent=it[0];
+   var sm=document.createElement("small");sm.textContent=it[1];sp.appendChild(sm);
+   l.appendChild(cb);l.appendChild(sp);c.appendChild(l)});
+  box.appendChild(c)});
+ $("prog").innerHTML="完成進度 "+n+" / "+total+(n===total?' <span class="ok">🎉 全部完成</span>':"");
+ $("barfill").style.width=(n/total*100)+"%";
+ var i=ORDER.indexOf(whoEl.value);$("next").textContent="下週輪到："+ORDER[(i+1)%3];
+}
+// signature
+var cv=$("sig"),ctx=cv.getContext("2d"),drawing=false;
+function fit(){var r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;ctx.scale(d,d);ctx.lineWidth=2.5;ctx.lineCap="round";ctx.lineJoin="round";ctx.strokeStyle=getComputedStyle(document.body).color;paintSaved()}
+function paintSaved(){if(!state.sig)return;var im=new Image();im.onload=function(){var r=cv.getBoundingClientRect();ctx.drawImage(im,0,0,r.width,r.height)};im.src=state.sig}
+function pos(e){var r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+cv.addEventListener("pointerdown",function(e){drawing=true;cv.setPointerCapture(e.pointerId);var p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+.1,p.y+.1);ctx.stroke()});
+cv.addEventListener("pointermove",function(e){if(!drawing)return;var p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke()});
+function end(){if(!drawing)return;drawing=false;try{state.sig=cv.toDataURL("image/png")}catch(x){}save()}
+cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);
+$("clr").onclick=function(){var r=cv.getBoundingClientRect();ctx.clearRect(0,0,r.width,r.height);state.sig="";save()};
+function setAll(){load();render();fit()}
+dateEl.value=today();dateEl.onchange=setAll;
+whoEl.onchange=function(){save();render()};
+$("reset").onclick=function(){if(confirm("確定要清除這一天的勾選與簽名嗎？")){state={checks:{},sig:"",who:whoEl.value};save();render();fit()}};
+$("copy").onclick=function(){
+ var n=0,lines=[];SECTIONS.forEach(function(s,si){s.items.forEach(function(it,ii){var d=!!state.checks[si+"-"+ii];if(d)n++;lines.push((d?"✅ ":"⬜ ")+it[0])})});
+ var txt="🏠 清潔回報｜"+dateEl.value+"\n值日生："+whoEl.value+"\n進度："+n+"/"+total+(state.sig?"\n簽名：已簽 ✍️":"\n簽名：尚未簽")+"\n\n"+lines.join("\n")+"\n\n下週輪到："+ORDER[(ORDER.indexOf(whoEl.value)+1)%3];
+ var done=function(m){$("msg").textContent=m};
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){done("已複製，貼到群組即可 ✅")},function(){fallback()})}else fallback();
+ function fallback(){var t=document.createElement("textarea");t.value=txt;document.body.appendChild(t);t.select();try{document.execCommand("copy");done("已複製，貼到群組即可 ✅")}catch(e){done("複製失敗，請手動截圖回報")}document.body.removeChild(t)}
+};
+window.addEventListener("load",setAll);
+</script>
+</body>
+</html>
